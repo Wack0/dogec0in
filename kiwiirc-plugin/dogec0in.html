@@ -1,0 +1,64 @@
+<script>
+window.vip = false;
+window.key = '';
+// ajaxtime!
+function loadConf() {
+  var xmlhttp;
+  if (window.XMLHttpRequest) {
+    xmlhttp=new XMLHttpRequest();
+  }
+  else {
+    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+  xmlhttp.onreadystatechange=function() {
+    if (xmlhttp.readyState==4) {
+      if (xmlhttp.status==200) {
+        var obj = JSON && JSON.parse(xmlhttp.responseText) || $.parseJSON(xmlhttp.responseText);
+        if (!obj.loggedin) {
+          alert("You are not logged in. Please log in first.");
+          window.location="about:blank";
+          return;
+        }
+        window.vip = obj.vip;
+        window.key = obj.key;
+        $('.server_details .nick input').val(obj.nick);
+        $('.server_details .nick input').prop('disabled',false);
+        $('.server_details .start button').prop('disabled',false);
+        $('.server_details .start button').click();
+        var network = kiwi.components.Network();
+        network.on('onconnect',function(nick) {
+          network.msg('wowsuchdoge','identify '+window.key);
+        });
+        network.on('notice',function(event) {
+          var nick = event.nick;
+          var ident = event.ident;
+          var msg = event.msg;
+          if ((nick == "wowsuchdoge") && (ident == "manyshibe")) {
+            if ((window.vip) && (msg.search("Much identified! Such gifts, many channel messages!") != -1)) network.join('#dogec0in-vip');
+            if (msg.search(String.fromCharCode(62)+"Global Notice"+String.fromCharCode(60)+" ") != -1) {
+              var res = msg.split(" ");
+              setTimeout(alert,100,res.slice(3).join(" "));
+            }
+          }
+        });
+        return;
+      } else {
+        alert("Cannot contact server, try again later. If this message persists, report this by emailing slipstream@dogec0in.com");
+        window.location="about:blank";
+      }
+    }
+  }
+  xmlhttp.open("GET","/index.php?a=c",true);
+  xmlhttp.send();
+}
+
+// Event fired after all plugins are loaded and Kiwi is ready
+kiwi.plugins.on('loaded', function() {
+  $('.server_details .have_pass').prop('hidden',true);
+  $('.server_details .channel').prop('hidden',true);
+  $('.server_details .nick input').prop('disabled',true);
+  $('.server_details .start button').prop('disabled',true);
+  $('.server_details .status').text('Loading...');
+  loadConf();          
+});
+</script>
